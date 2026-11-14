@@ -1,0 +1,502 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Following Gleason (Copy)</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a lab-notebook page — problem up top, one simulation bench (road, readouts, controls), two graphs side by side, then the worked solution. */
+:root {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --ink: #1b1f27;
+  --muted: #5d6573;
+  --line: #d9dde4;
+  --road: #3a3f48;
+  --road-mark: #e9e3c9;
+  --gleason: #1f6fd1;
+  --che: #e0662a;
+  --accent: #2c3e66;
+  --green: #2f9e57;
+  --red: #d23b3b;
+  --chip: #eceff4;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151b; --panel: #1b1f27; --ink: #e8ebf0; --muted: #9aa3b2; --line: #2e3440;
+    --road: #2a2e36; --road-mark: #8c8670; --gleason: #5ea2ff; --che: #ff8c52; --accent: #a9bce6;
+    --green: #4cc47a; --red: #ff6464; --chip: #252a34; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151b; --panel: #1b1f27; --ink: #e8ebf0; --muted: #9aa3b2; --line: #2e3440;
+  --road: #2a2e36; --road-mark: #8c8670; --gleason: #5ea2ff; --che: #ff8c52; --accent: #a9bce6;
+  --green: #4cc47a; --red: #ff6464; --chip: #252a34; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(30px, 5vw, 44px); line-height: 1.05; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--font-display); font-weight: 700; font-size: 16px; margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 15px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 14px; height: 4px; border-radius: 2px; display: inline-block; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+details.problem summary { cursor: pointer; font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+details.problem p, details.problem ol { max-width: 72ch; margin: 10px 0 0; }
+details.problem ol { padding-left: 22px; list-style: none; counter-reset: q; }
+details.problem li { counter-increment: q; }
+details.problem li::before { content: "(" counter(q, lower-alpha) ") "; font-weight: 600; margin-left: -22px; }
+canvas { display: block; width: 100%; }
+#road { height: 170px; }
+.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.ro { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.ro.g { box-shadow: inset 3px 0 0 var(--gleason); }
+.ro.c { box-shadow: inset 3px 0 0 var(--che); }
+.ro .k { font-family: var(--font-mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.ro .v { font-family: var(--font-mono); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ro .s { font-size: 13px; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button { font: 600 14px var(--font-body); color: var(--ink); background: var(--chip); border: 1px solid var(--line); border-radius: 7px; padding: 8px 12px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); color: var(--panel); border-color: var(--accent); min-width: 84px; }
+.speeds { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.speeds button { border: 0; border-radius: 0; background: transparent; padding: 8px 10px; font-family: var(--font-mono); font-size: 13px; }
+.speeds button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+.slider-row { display: flex; align-items: center; gap: 12px; }
+.slider-row input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.slider-row output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 14px; color: var(--muted); min-width: 64px; text-align: right; }
+.moments { display: flex; flex-wrap: wrap; gap: 8px; }
+.moments button { font-weight: 400; font-size: 13px; padding: 6px 10px; }
+.moments button b { font-family: var(--font-mono); font-weight: 600; margin-right: 6px; color: var(--accent); }
+.moment-note { font-size: 14px; color: var(--muted); min-height: 1.4em; margin: 0; }
+.graphs { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+.graphs canvas { height: 300px; }
+.graph-note { font-size: 13px; color: var(--muted); margin: 0; }
+.solution { display: grid; gap: 22px; }
+.part { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; min-width: 0; }
+.part:first-of-type { border-top: 0; padding-top: 0; }
+.part p { margin: 0; max-width: 72ch; }
+.step { display: grid; grid-template-columns: 112px 1fr; gap: 4px 14px; align-items: baseline; }
+.step .lab { font-family: var(--font-mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.eq { font-family: var(--font-mono); font-size: 14px; overflow-x: auto; white-space: nowrap; min-width: 0; }
+.ans { font-family: var(--font-mono); font-size: 14px; font-weight: 600; background: var(--chip); border-radius: 6px; padding: 8px 12px; overflow-x: auto; }
+.piece { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 14px; }
+.piece td { padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.piece td:first-child { color: var(--muted); }
+.tablewrap { overflow-x: auto; }
+@media (max-width: 560px) { .step { grid-template-columns: 1fr; } .ro .v { font-size: 18px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Kinematics · Sunset Boulevard, Los Angeles</div>
+    <h1>Following Gleason</h1>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--gleason)"></i>Gleason</span>
+      <span><i class="sw" style="background:var(--che)"></i>Che</span>
+      <span>Stop light at Sunset &amp; Vine, 90 m from start</span>
+    </div>
+  </header>
+
+  <details class="problem panel">
+    <summary>The problem</summary>
+    <p>My parents and I are visiting our family friend Gleason and his wife and three kids in LA. Gleason wants to go to a restaurant that for some odd reason is not on Google Maps. Since my parents and I don’t know our way around very well, Gleason proposes that we just follow their car to the spot. In agreement, we all get into our cars starting at the same position on Sunset Boulevard. Gleason accelerates 3.0 m/s² until he reaches a velocity of 18 m/s, then holds that speed. My dad, Che, begins driving 1.0 s after Gleason does, accelerating 2.0 m/s² until he reaches 12 m/s, then holds that speed. Gleason makes it through the stop light at Sunset and Vine, which is 90 m away from the starting point, but it turns red before Che gets there. Che, realizing he’s not going to make the light, begins braking at 18 m before the light and stops exactly at it. The light turns green 7.0 s later. Not wanting to lose Gleason, Che accelerates 4.5 m/s² until he reaches 27 m/s, then holds that speed.</p>
+    <ol>
+      <li>Write Gleason's position equation.</li>
+      <li>Write Che’s position equation.</li>
+      <li>At what time does Che come to a stop at the light, and how far ahead is Gleason at that moment?</li>
+      <li>What are Gleason and Che’s velocities at the instant Che stops at the light?</li>
+      <li>At what time and position does Che catch up to Gleason?</li>
+      <li>When the light turns green and Che starts speeding up, does the gap between him and Gleason start shrinking right away? Explain.</li>
+    </ol>
+  </details>
+
+  <section class="panel" aria-label="Simulation">
+    <canvas id="road" aria-label="Side view of both cars on Sunset Boulevard with a distance scale in meters"></canvas>
+
+    <div class="readouts">
+      <div class="ro"><span class="k">Time</span><span class="v" id="rT">0.00 s</span><span class="s" id="rPhase">Both cars at the start</span></div>
+      <div class="ro g"><span class="k">Gleason</span><span class="v" id="rGx">0.0 m</span><span class="s" id="rGv">v = 0.00 m/s</span></div>
+      <div class="ro c"><span class="k">Che</span><span class="v" id="rCx">0.0 m</span><span class="s" id="rCv">v = 0.00 m/s</span></div>
+      <div class="ro"><span class="k">Gap</span><span class="v" id="rGap">0.0 m</span><span class="s" id="rGapNote">Gleason ahead by</span></div>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="play" type="button">Play</button>
+      <button id="reset" type="button">Reset</button>
+      <div class="speeds" role="group" aria-label="Playback speed">
+        <button type="button" data-speed="0.5" aria-pressed="false">0.5×</button>
+        <button type="button" data-speed="1" aria-pressed="true">1×</button>
+        <button type="button" data-speed="2" aria-pressed="false">2×</button>
+        <button type="button" data-speed="5" aria-pressed="false">5×</button>
+      </div>
+    </div>
+    <div class="slider-row">
+      <input type="range" id="time" min="0" max="60" step="0.01" value="0" aria-label="Time in seconds">
+      <output id="timeOut" for="time">0.00 s</output>
+    </div>
+
+    <div>
+      <h3 style="margin-bottom:8px">Jump to a key moment</h3>
+      <div class="moments" id="moments"></div>
+      <p class="moment-note" id="momentNote"></p>
+    </div>
+  </section>
+
+  <section class="graphs">
+    <div class="panel">
+      <h2>Position vs. time</h2>
+      <canvas id="xt" aria-label="Position-time graph for both cars"></canvas>
+      <p class="graph-note">The lines cross where the cars are at the same place: Che catches Gleason at 53.0 s.</p>
+    </div>
+    <div class="panel">
+      <h2>Velocity vs. time</h2>
+      <canvas id="vt" aria-label="Velocity-time graph for both cars with shaded area under each line"></canvas>
+      <p class="graph-note">Shaded area under each line is that car's displacement. Where Gleason's line is higher, the gap grows.</p>
+    </div>
+  </section>
+
+  <section class="panel solution" aria-label="Worked solution">
+    <h2>Worked solution</h2>
+    <p style="margin:0;color:var(--muted)">t is measured from the moment Gleason starts. Each stage has constant acceleration, so every step uses v = v₀ + at, Δx = v₀t + ½at², or v² = v₀² + 2aΔx. Answers are given to 3 significant figures.</p>
+
+    <div class="part">
+      <h3>(a) Gleason’s position equation</h3>
+      <div class="step"><span class="lab">Equation</span><span class="eq">v = v₀ + at  →  t = (v − v₀) / a</span></div>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">t = (18 − 0) / 3.0 = 6.00 s</span></div>
+      <div class="step"><span class="lab">Equation</span><span class="eq">Δx = v₀t + ½at²</span></div>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">Δx = 0 + ½(3.0)(6.00)² = 54.0 m</span></div>
+      <div class="tablewrap"><table class="piece">
+        <tr><td>0 ≤ t ≤ 6.00 s</td><td>x = 1.50t²</td></tr>
+        <tr><td>t &gt; 6.00 s</td><td>x = 54.0 + 18.0(t − 6.00)</td></tr>
+      </table></div>
+    </div>
+
+    <div class="part">
+      <h3>(b) Che’s position equation</h3>
+      <p><strong>Speeding up</strong> (starts at t = 1.00 s)</p>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">t = (12 − 0) / 2.0 = 6.00 s  →  ends at t = 7.00 s</span></div>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">Δx = ½(2.0)(6.00)² = 36.0 m</span></div>
+      <p><strong>Braking</strong> (starts 18 m before the light, at x = 72.0 m)</p>
+      <div class="step"><span class="lab">Equation</span><span class="eq">v² = v₀² + 2aΔx  →  a = (v² − v₀²) / (2Δx)</span></div>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">a = (0² − 12²) / (2 × 18) = −4.00 m/s²</span></div>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">t = (0 − 12) / (−4.00) = 3.00 s</span></div>
+      <p><strong>Holding speed</strong> between 36.0 m and 72.0 m</p>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">t = Δx / v = (72.0 − 36.0) / 12 = 3.00 s  →  braking runs t = 10.0 s to 13.0 s</span></div>
+      <p><strong>After the green light</strong> (t = 13.0 + 7.0 = 20.0 s)</p>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">t = (27 − 0) / 4.5 = 6.00 s  →  ends at t = 26.0 s</span></div>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">Δx = ½(4.5)(6.00)² = 81.0 m  →  x = 90.0 + 81.0 = 171 m</span></div>
+      <div class="tablewrap"><table class="piece">
+        <tr><td>0 ≤ t &lt; 1.00 s</td><td>x = 0</td></tr>
+        <tr><td>1.00 ≤ t ≤ 7.00 s</td><td>x = 1.00(t − 1.00)²</td></tr>
+        <tr><td>7.00 &lt; t ≤ 10.0 s</td><td>x = 36.0 + 12.0(t − 7.00)</td></tr>
+        <tr><td>10.0 &lt; t ≤ 13.0 s</td><td>x = 72.0 + 12.0(t − 10.0) − 2.00(t − 10.0)²</td></tr>
+        <tr><td>13.0 &lt; t ≤ 20.0 s</td><td>x = 90.0</td></tr>
+        <tr><td>20.0 &lt; t ≤ 26.0 s</td><td>x = 90.0 + 2.25(t − 20.0)²</td></tr>
+        <tr><td>t &gt; 26.0 s</td><td>x = 171 + 27.0(t − 26.0)</td></tr>
+      </table></div>
+    </div>
+
+    <div class="part">
+      <h3>(c) When Che stops, and Gleason’s lead</h3>
+      <div class="step"><span class="lab">From (b)</span><span class="eq">Che stops at t = 10.0 + 3.00 = 13.0 s</span></div>
+      <div class="step"><span class="lab">Equation</span><span class="eq">x_G = 54.0 + 18.0(t − 6.00)</span></div>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">x_G = 54.0 + 18.0(13.0 − 6.00) = 180 m;  gap = 180 − 90.0 = 90.0 m</span></div>
+      <div class="ans">t = 13.0 s;  Gleason is 90.0 m ahead</div>
+    </div>
+
+    <div class="part">
+      <h3>(d) Velocities when Che stops</h3>
+      <div class="step"><span class="lab">Gleason</span><span class="eq">t = 13.0 s &gt; 6.00 s, so he is holding v = 18.0 m/s</span></div>
+      <div class="step"><span class="lab">Che</span><span class="eq">v = v₀ + at = 12 + (−4.00)(3.00) = 0.00 m/s</span></div>
+      <div class="ans">Gleason: 18.0 m/s;  Che: 0.00 m/s</div>
+    </div>
+
+    <div class="part">
+      <h3>(e) When and where Che catches Gleason</h3>
+      <p>At t = 26.0 s, Gleason is at 54.0 + 18.0(20.0) = 414 m and Che is at 171 m, so Che is still behind. Set the two constant-speed equations equal.</p>
+      <div class="step"><span class="lab">Equation</span><span class="eq">x_G = x_C</span></div>
+      <div class="step"><span class="lab">Substitute</span><span class="eq">54.0 + 18.0(t − 6.00) = 171 + 27.0(t − 26.0)</span></div>
+      <div class="step"><span class="lab">Solve</span><span class="eq">18.0t − 54.0 = 27.0t − 531  →  9.00t = 477  →  t = 53.0 s</span></div>
+      <div class="step"><span class="lab">Position</span><span class="eq">x = 54.0 + 18.0(53.0 − 6.00) = 900 m</span></div>
+      <div class="ans">t = 53.0 s;  x = 9.00 × 10² m from the start</div>
+    </div>
+
+    <div class="part">
+      <h3>(f) Does the gap shrink right away?</h3>
+      <p><strong>No.</strong> The gap shrinks only when the car behind is faster than the car ahead. Right after the light turns green, Che is going slower than Gleason’s 18 m/s, so Gleason keeps pulling away. The gap is largest at the instant their speeds are equal, and it starts closing only once Che is faster than 18 m/s.</p>
+      <div class="step"><span class="lab">Check</span><span class="eq">4.5(t − 20.0) = 18.0  →  t = 24.0 s;  max gap = 378 − 126 = 252 m</span></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const T_MAX = 60;
+  const X_MAX = 1100;
+
+  function gleason(t) {
+    if (t <= 0) return { x: 0, v: 0 };
+    if (t <= 6) return { x: 1.5 * t * t, v: 3 * t };
+    return { x: 54 + 18 * (t - 6), v: 18 };
+  }
+  function che(t) {
+    if (t < 1) return { x: 0, v: 0 };
+    if (t <= 7) { const u = t - 1; return { x: u * u, v: 2 * u }; }
+    if (t <= 10) return { x: 36 + 12 * (t - 7), v: 12 };
+    if (t <= 13) { const u = t - 10; return { x: 72 + 12 * u - 2 * u * u, v: 12 - 4 * u }; }
+    if (t <= 20) return { x: 90, v: 0 };
+    if (t <= 26) { const u = t - 20; return { x: 90 + 2.25 * u * u, v: 4.5 * u }; }
+    return { x: 171 + 27 * (t - 26), v: 27 };
+  }
+  function phase(t) {
+    if (t <= 0) return "Both cars at the start";
+    if (t < 1) return "Gleason speeding up; Che waiting";
+    if (t < 6) return "Both speeding up";
+    if (t < 7) return "Gleason cruising; Che speeding up";
+    if (t < 8) return "Both cruising";
+    if (t < 10) return "Gleason through the light";
+    if (t < 13) return "Che braking for the red light";
+    if (t < 20) return "Che stopped at the red light";
+    if (t < 24) return "Che speeding up, gap still growing";
+    if (t < 26) return "Che faster now, gap closing";
+    if (t < 53) return "Che cruising at 27 m/s, closing in";
+    if (t < 53.005) return "Che catches Gleason";
+    return "Che has passed Gleason";
+  }
+  function lightRed(t) { return t >= 10 && t < 20; }
+
+  const moments = [
+    { t: 0, label: "Gleason starts", note: "Gleason pulls away at 3.0 m/s²." },
+    { t: 1, label: "Che starts", note: "Che starts 1.0 s later at 2.0 m/s²." },
+    { t: 6, label: "Gleason hits 18 m/s", note: "Gleason reaches 18 m/s at 54.0 m and holds it." },
+    { t: 7, label: "Che hits 12 m/s", note: "Che reaches 12 m/s at 36.0 m and holds it." },
+    { t: 8, label: "Gleason passes the light", note: "Gleason crosses the 90 m light at 8.00 s." },
+    { t: 10, label: "Che brakes", note: "Che starts braking at 72.0 m, 18 m before the light." },
+    { t: 13, label: "Che stops", note: "(c), (d): Che stops at 13.0 s. Gleason is at 180 m going 18.0 m/s, 90.0 m ahead." },
+    { t: 20, label: "Light turns green", note: "Green 7.0 s after Che stops. Che accelerates at 4.5 m/s²." },
+    { t: 24, label: "Speeds equal", note: "(f): Both at 18.0 m/s. The gap peaks here at 252 m." },
+    { t: 26, label: "Che hits 27 m/s", note: "Che reaches 27 m/s at 171 m, still 243 m behind." },
+    { t: 53, label: "Che catches Gleason", note: "(e): They meet at 53.0 s, 900 m from the start." }
+  ];
+
+  let t = 0, playing = false, speed = 1, last = null;
+  const $ = id => document.getElementById(id);
+  const slider = $("time");
+  let colors = {};
+
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement);
+    ["ink","muted","line","road","road-mark","gleason","che","green","red","panel","accent"].forEach(k => colors[k] = cs.getPropertyValue("--" + k).trim());
+  }
+
+  function fitCanvas(c) {
+    const dpr = window.devicePixelRatio || 1;
+    const r = c.getBoundingClientRect();
+    const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    const ctx = c.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w: r.width, h: r.height };
+  }
+
+  function drawCar(ctx, xFront, yBase, color, label, flip) {
+    const L = 30, H = 11;
+    const x0 = xFront - L;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(x0, yBase - H, L, H, 3) : ctx.rect(x0, yBase - H, L, H);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x0 + 7, yBase - H); ctx.lineTo(x0 + 11, yBase - H - 7); ctx.lineTo(x0 + 22, yBase - H - 7); ctx.lineTo(x0 + 26, yBase - H);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = colors.ink;
+    [x0 + 7, x0 + 23].forEach(cx => { ctx.beginPath(); ctx.arc(cx, yBase, 3.6, 0, Math.PI * 2); ctx.fill(); });
+    ctx.fillStyle = color;
+    ctx.font = "600 12px " + getComputedStyle(document.body).getPropertyValue("--font-body");
+    ctx.textAlign = "center";
+    ctx.fillText(label, x0 + L / 2, flip ? yBase + 18 : yBase - H - 12);
+  }
+
+  function drawRoad() {
+    const { ctx, w, h } = fitCanvas($("road"));
+    ctx.clearRect(0, 0, w, h);
+    const padL = 36, padR = 24;
+    const sx = m => padL + (m / X_MAX) * (w - padL - padR);
+    const roadTop = 50, roadBot = 112;
+    ctx.fillStyle = colors.road;
+    ctx.fillRect(sx(0) - 30, roadTop, (w - padR) - (sx(0) - 30), roadBot - roadTop);
+    ctx.strokeStyle = colors["road-mark"]; ctx.lineWidth = 2; ctx.setLineDash([10, 10]);
+    ctx.beginPath(); ctx.moveTo(sx(0) - 30, (roadTop + roadBot) / 2); ctx.lineTo(w - padR, (roadTop + roadBot) / 2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // start line
+    ctx.strokeStyle = colors["road-mark"]; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(sx(0), roadTop); ctx.lineTo(sx(0), roadBot); ctx.stroke();
+
+    // stop light at 90 m
+    const lx = sx(90);
+    ctx.strokeStyle = colors.muted; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(lx, roadTop); ctx.lineTo(lx, 12); ctx.stroke();
+    ctx.fillStyle = colors.ink; ctx.fillRect(lx - 7, 6, 14, 26);
+    const red = lightRed(t);
+    ctx.fillStyle = red ? colors.red : colors.line; ctx.beginPath(); ctx.arc(lx, 13, 4.5, 0, 7); ctx.fill();
+    ctx.fillStyle = red ? colors.line : colors.green; ctx.beginPath(); ctx.arc(lx, 25, 4.5, 0, 7); ctx.fill();
+    ctx.fillStyle = colors.muted; ctx.font = "12px " + getComputedStyle(document.body).fontFamily; ctx.textAlign = "left";
+    ctx.fillText("Sunset & Vine", lx + 12, 22);
+    ctx.strokeStyle = colors["road-mark"]; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(lx, (roadTop + roadBot) / 2); ctx.lineTo(lx, roadBot); ctx.stroke();
+
+    // scale
+    const axY = 136;
+    ctx.strokeStyle = colors.muted; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(sx(0), axY); ctx.lineTo(sx(X_MAX), axY); ctx.stroke();
+    ctx.fillStyle = colors.muted; ctx.textAlign = "center";
+    ctx.font = "11px " + getComputedStyle(document.documentElement).getPropertyValue("--font-mono");
+    const step = w < 520 ? 200 : 100;
+    for (let m = 0; m <= X_MAX; m += 50) {
+      const major = m % step === 0;
+      ctx.beginPath(); ctx.moveTo(sx(m), axY); ctx.lineTo(sx(m), axY + (major ? 7 : 4)); ctx.stroke();
+      if (major) ctx.fillText(m + (m === 0 ? " m" : ""), sx(m), axY + 20);
+    }
+
+    const g = gleason(t), c = che(t);
+    // gap bracket
+    if (Math.abs(g.x - c.x) > 0.5) {
+      const y = 44;
+      ctx.strokeStyle = colors.muted; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(sx(c.x), y - 4); ctx.lineTo(sx(c.x), y + 4); ctx.moveTo(sx(c.x), y); ctx.lineTo(sx(g.x), y); ctx.moveTo(sx(g.x), y - 4); ctx.lineTo(sx(g.x), y + 4); ctx.stroke();
+    }
+    drawCar(ctx, sx(g.x), roadTop + 22, colors.gleason, "Gleason", false);
+    drawCar(ctx, sx(c.x), roadBot - 6, colors.che, "Che", true);
+  }
+
+  function graphFrame(canvas, yMax, yStep, yLabel) {
+    const { ctx, w, h } = fitCanvas(canvas);
+    ctx.clearRect(0, 0, w, h);
+    const m = { l: 52, r: 14, t: 12, b: 40 };
+    const sx = s => m.l + (s / T_MAX) * (w - m.l - m.r);
+    const sy = v => h - m.b - (v / yMax) * (h - m.t - m.b);
+    const mono = getComputedStyle(document.documentElement).getPropertyValue("--font-mono");
+    ctx.font = "11px " + mono; ctx.fillStyle = colors.muted; ctx.strokeStyle = colors.line; ctx.lineWidth = 1;
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (let v = 0; v <= yMax; v += yStep) { ctx.beginPath(); ctx.moveTo(sx(0), sy(v)); ctx.lineTo(sx(T_MAX), sy(v)); ctx.stroke(); ctx.fillText(v, m.l - 8, sy(v)); }
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    for (let s = 0; s <= T_MAX; s += 10) { ctx.beginPath(); ctx.moveTo(sx(s), sy(0)); ctx.lineTo(sx(s), sy(0) + 5); ctx.strokeStyle = colors.muted; ctx.stroke(); ctx.fillText(s, sx(s), sy(0) + 8); }
+    ctx.fillText("time (s)", (sx(0) + sx(T_MAX)) / 2, h - 14);
+    ctx.save(); ctx.translate(12, (sy(0) + sy(yMax)) / 2); ctx.rotate(-Math.PI / 2); ctx.textBaseline = "middle"; ctx.fillText(yLabel, 0, 0); ctx.restore();
+    return { ctx, sx, sy, w, h };
+  }
+
+  function curve(ctx, sx, sy, fn, key, color, fill) {
+    const pts = [];
+    for (let s = 0; s <= T_MAX + 1e-9; s += 0.05) pts.push([sx(s), sy(fn(s)[key])]);
+    if (fill) {
+      ctx.beginPath(); ctx.moveTo(sx(0), sy(0));
+      pts.forEach(p => ctx.lineTo(p[0], p[1]));
+      ctx.lineTo(sx(T_MAX), sy(0)); ctx.closePath();
+      ctx.globalAlpha = 0.16; ctx.fillStyle = color; ctx.fill(); ctx.globalAlpha = 1;
+    }
+    ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+    ctx.strokeStyle = color; ctx.lineWidth = 2.2; ctx.stroke();
+  }
+
+  function marker(ctx, sx, sy, key) {
+    ctx.strokeStyle = colors.accent; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(sx(t), sy(0)); ctx.lineTo(sx(t), 12); ctx.stroke(); ctx.setLineDash([]);
+    [[gleason, colors.gleason], [che, colors.che]].forEach(([fn, col]) => {
+      ctx.beginPath(); ctx.arc(sx(t), sy(fn(t)[key]), 5, 0, 7);
+      ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = colors.panel; ctx.lineWidth = 2; ctx.stroke();
+    });
+  }
+
+  function drawGraphs() {
+    let f = graphFrame($("xt"), 1100, 200, "position (m)");
+    curve(f.ctx, f.sx, f.sy, gleason, "x", colors.gleason, false);
+    curve(f.ctx, f.sx, f.sy, che, "x", colors.che, false);
+    // meet point
+    f.ctx.beginPath(); f.ctx.arc(f.sx(53), f.sy(900), 7, 0, 7); f.ctx.strokeStyle = colors.ink; f.ctx.lineWidth = 1.5; f.ctx.stroke();
+    marker(f.ctx, f.sx, f.sy, "x");
+
+    f = graphFrame($("vt"), 30, 5, "velocity (m/s)");
+    curve(f.ctx, f.sx, f.sy, gleason, "v", colors.gleason, true);
+    curve(f.ctx, f.sx, f.sy, che, "v", colors.che, true);
+    marker(f.ctx, f.sx, f.sy, "v");
+  }
+
+  function updateReadouts() {
+    const g = gleason(t), c = che(t), gap = g.x - c.x;
+    $("rT").textContent = t.toFixed(2) + " s";
+    $("rPhase").textContent = phase(t);
+    $("rGx").textContent = g.x.toFixed(1) + " m";
+    $("rGv").textContent = "v = " + g.v.toFixed(2) + " m/s";
+    $("rCx").textContent = c.x.toFixed(1) + " m";
+    $("rCv").textContent = "v = " + c.v.toFixed(2) + " m/s";
+    $("rGap").textContent = Math.abs(gap).toFixed(1) + " m";
+    $("rGapNote").textContent = Math.abs(gap) < 0.05 ? "Side by side" : gap > 0 ? "Gleason ahead" : "Che ahead";
+    slider.value = t;
+    $("timeOut").textContent = t.toFixed(2) + " s";
+  }
+
+  function render() { drawRoad(); drawGraphs(); updateReadouts(); }
+
+  function setTime(nt) { t = Math.min(T_MAX, Math.max(0, nt)); render(); }
+
+  function tick(ts) {
+    if (!playing) return;
+    if (last !== null) {
+      const nt = t + ((ts - last) / 1000) * speed;
+      if (nt >= T_MAX) { setTime(T_MAX); setPlaying(false); return; }
+      setTime(nt);
+    }
+    last = ts;
+    requestAnimationFrame(tick);
+  }
+  function setPlaying(p) {
+    playing = p; last = null;
+    $("play").textContent = p ? "Pause" : "Play";
+    if (p) { if (t >= T_MAX) setTime(0); requestAnimationFrame(tick); }
+  }
+
+  $("play").addEventListener("click", () => setPlaying(!playing));
+  $("reset").addEventListener("click", () => { setPlaying(false); setTime(0); $("momentNote").textContent = ""; });
+  slider.addEventListener("input", () => { setPlaying(false); setTime(parseFloat(slider.value)); });
+  document.querySelectorAll(".speeds button").forEach(b => b.addEventListener("click", () => {
+    speed = parseFloat(b.dataset.speed);
+    document.querySelectorAll(".speeds button").forEach(o => o.setAttribute("aria-pressed", o === b ? "true" : "false"));
+  }));
+
+  const mWrap = $("moments");
+  moments.forEach(m => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = "<b>" + m.t.toFixed(m.t >= 10 ? 1 : 2) + " s</b>" + m.label;
+    b.addEventListener("click", () => { setPlaying(false); setTime(m.t); $("momentNote").textContent = m.note; });
+    mWrap.appendChild(b);
+  });
+
+  readColors();
+  render();
+  window.addEventListener("resize", render);
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  (mq.addEventListener ? mq.addEventListener("change", () => { readColors(); render(); }) : mq.addListener(() => { readColors(); render(); }));
+  new MutationObserver(() => { readColors(); render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+})();
+</script>
+
+</body></html>
